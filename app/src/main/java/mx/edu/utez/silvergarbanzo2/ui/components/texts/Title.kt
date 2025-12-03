@@ -10,7 +10,7 @@ import androidx.compose.ui.graphics.Color
 @Composable
 fun Title(
     text: String,
-    fontSize: Int = 24,
+    fontSize: Int = 36,
     color: Color = Color.Black,
     textAlign: TextAlign = TextAlign.Center,
     modifier: Modifier = Modifier

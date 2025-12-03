@@ -14,7 +14,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import mx.edu.utez.silvergarbanzo2.R
 import mx.edu.utez.silvergarbanzo2.ui.components.buttons.PrimaryButton
+import mx.edu.utez.silvergarbanzo2.ui.components.images.CircleImage
 import mx.edu.utez.silvergarbanzo2.ui.components.inputs.PasswordField
 import mx.edu.utez.silvergarbanzo2.ui.components.inputs.UserInputField
 import mx.edu.utez.silvergarbanzo2.ui.components.texts.Link
@@ -41,6 +43,9 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ){
+
+        //CircleImage(R.drawable.silverGarbanzologo)
+
         Title(text = "Iniciar Sesión")
 
         Spacer(modifier = Modifier.height(32.dp))
