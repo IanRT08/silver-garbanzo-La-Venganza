@@ -94,4 +94,16 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp.logging)
     implementation(libs.kotlinx.coroutines.android)
+
+    // Ubicación
+    implementation(libs.playservices.location)
+
+    // Cámara (CameraX)
+    implementation(libs.camerax.core)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
+
+    // Accompanist Permissions
+    implementation(libs.accompanist.permissions)
 }
