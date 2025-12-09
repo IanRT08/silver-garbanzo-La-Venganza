@@ -8,12 +8,12 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import mx.edu.utez.silvergarbanzo2.data.model.Post
 import mx.edu.utez.silvergarbanzo2.data.repository.PostRepository
-import okhttp3.MultipartBody
-import okhttp3.RequestBody
+import java.io.File
+import kotlin.collections.filter
+import kotlin.collections.map
 
 class PostViewModel(private val repository: PostRepository) : ViewModel() {
 
-    // Estados para la pantalla de publicaciones
     var posts by mutableStateOf<List<Post>>(emptyList())
         private set
     var isLoading by mutableStateOf(false)
@@ -21,62 +21,50 @@ class PostViewModel(private val repository: PostRepository) : ViewModel() {
     var errorMessage by mutableStateOf<String?>(null)
         private set
 
-    // Estados para creación/edición
-    var currentPost by mutableStateOf<Post?>(null)
-        private set
-    var isCreating by mutableStateOf(false)
-        private set
+    // Para el formulario de nueva publicación
+    var titulo by mutableStateOf("")
+    var descripcion by mutableStateOf("")
+    var fechaVisita by mutableStateOf("")
+    var selectedImages by mutableStateOf<List<File>>(emptyList())
+    var isPrivate by mutableStateOf(false)
+
+    // Ubicación (se obtendrá del GPS)
+    var currentLatitude by mutableStateOf(0.0)
+    var currentLongitude by mutableStateOf(0.0)
+    var currentAddress by mutableStateOf<String?>(null)
 
     fun loadPublicPosts() {
         isLoading = true
-        errorMessage = null
-
         viewModelScope.launch {
             val result = repository.getPublicPosts()
             isLoading = false
             result.onSuccess { postList ->
                 posts = postList
             }.onFailure { error ->
-                errorMessage = "Error al cargar publicaciones: ${error.message}"
+                errorMessage = error.message
             }
         }
     }
 
-    fun loadUserPosts(userId: Int) {
+    fun createNewPost() {
         isLoading = true
-
         viewModelScope.launch {
-            val result = repository.getUserPosts(userId)
-            isLoading = false
-            result.onSuccess { postList ->
-                posts = postList
-            }.onFailure { error ->
-                errorMessage = "Error al cargar tus publicaciones: ${error.message}"
-            }
-        }
-    }
-
-    fun createPost(post: Post, images: List<MultipartBody.Part>) {
-        isCreating = true
-        viewModelScope.launch {
-            // Convertir post a map para multipart
-            val postData = mapOf(
-                "titulo" to post.titulo.toRequestBody(),
-                "descripcion" to post.descripcion.toRequestBody(),
-                "latitud" to post.latitud.toString().toRequestBody(),
-                "longitud" to post.longitud.toString().toRequestBody(),
-                "fecha_visita" to post.fechaVisita.toRequestBody(),
-                "es_privado" to post.esPrivado.toString().toRequestBody()
+            val result = repository.createPostWithUris(
+                titulo = titulo,
+                descripcion = descripcion,
+                latitud = currentLatitude,
+                longitud = currentLongitude,
+                fechaVisita = fechaVisita,
+                direccion = currentAddress,
+                esPrivado = isPrivate,
+                imageFiles = selectedImages
             )
-
-            val result = repository.createPost(postData, images)
-            isCreating = false
+            isLoading = false
             result.onSuccess { newPost ->
-                // Actualizar lista localmente
                 posts = posts + newPost
-                currentPost = null
+                clearForm()
             }.onFailure { error ->
-                errorMessage = "Error al crear publicación: ${error.message}"
+                errorMessage = error.message
             }
         }
     }
@@ -87,7 +75,7 @@ class PostViewModel(private val repository: PostRepository) : ViewModel() {
             result.onSuccess {
                 posts = posts.filter { it.id != postId }
             }.onFailure { error ->
-                errorMessage = "Error al eliminar publicación: ${error.message}"
+                errorMessage = error.message
             }
         }
     }
@@ -105,9 +93,28 @@ class PostViewModel(private val repository: PostRepository) : ViewModel() {
             }
         }
     }
-}
 
-// Helper extension
-private fun String.toRequestBody(): RequestBody {
-    return RequestBody.create(MultipartBody.FORM, this)
+    private fun clearForm() {
+        titulo = ""
+        descripcion = ""
+        fechaVisita = ""
+        selectedImages = emptyList()
+        isPrivate = false
+    }
+
+    fun addImage(file: File) {
+        selectedImages = selectedImages + file
+    }
+
+    fun removeImage(index: Int) {
+        selectedImages = selectedImages.toMutableList().apply {
+            removeAt(index)
+        }
+    }
+
+    fun updateLocation(lat: Double, lng: Double, address: String? = null) {
+        currentLatitude = lat
+        currentLongitude = lng
+        currentAddress = address
+    }
 }
