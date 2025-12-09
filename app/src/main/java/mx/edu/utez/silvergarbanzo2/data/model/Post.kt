@@ -2,6 +2,7 @@ package mx.edu.utez.silvergarbanzo2.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 
 @Entity(tableName = "posts")
@@ -19,6 +20,18 @@ data class Post(
     @SerializedName("fecha_creacion") val fechaCreacion: String = "", // Formato: "2024-01-15T10:30:00"
     @SerializedName("fecha_visita") val fechaVisita: String,
     @SerializedName("contador_visitas") val contadorVisitas: Int = 0,
-    @SerializedName("imagenes") val imagenes: List<String> = emptyList(), // URLs de las imágenes
+    @SerializedName("imagenes") val imagenesString: String = "", // Guarda como JSON string
     @SerializedName("es_privado") val esPrivado: Boolean = false
-)
+){
+    // Propiedad computada para acceder como lista
+    val imagenes: List<String>
+        get() = try {
+            if (imagenesString.isNotEmpty()) {
+                Gson().fromJson(imagenesString, Array<String>::class.java).toList()
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+}

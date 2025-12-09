@@ -68,10 +68,12 @@ fun RegisterScreen(
         )
 
         //Contraseña
-        UserInputField(
+        OutlinedTextField(
             value = viewModel.password,
             onValueChange = { viewModel.password = it },
-            label = "Contraseña"
+            label = { Text("Contraseña") },
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth()
         )
 
         //Repetir Contraseña
@@ -95,6 +97,14 @@ fun RegisterScreen(
             CircularProgressIndicator()
         } else {
 
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            //Botón de registro
+            PrimaryButton(
+                text = "Registrarse",
+                onClick = { viewModel.onRegisterClick() }
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 

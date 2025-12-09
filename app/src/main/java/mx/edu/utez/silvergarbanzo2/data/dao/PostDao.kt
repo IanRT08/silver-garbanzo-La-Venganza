@@ -5,10 +5,10 @@ import mx.edu.utez.silvergarbanzo2.data.model.Post
 
 @Dao
 interface PostDao {
-    @Query("SELECT * FROM posts WHERE es_privado = 0")
+    @Query("SELECT * FROM posts WHERE esPrivado = 0")
     suspend fun getPublicPosts(): List<Post>
 
-    @Query("SELECT * FROM posts WHERE usuario_id = :userId")
+    @Query("SELECT * FROM posts WHERE usuarioId = :userId")
     suspend fun getPostsByUser(userId: Int): List<Post>
 
     @Query("SELECT * FROM posts WHERE id = :postId")
@@ -23,6 +23,6 @@ interface PostDao {
     @Delete
     suspend fun deletePost(post: Post)
 
-    @Query("UPDATE posts SET contador_visitas = contador_visitas + 1 WHERE id = :postId")
+    @Query("UPDATE posts SET contadorVisitas = contadorVisitas + 1 WHERE id = :postId")
     suspend fun incrementVisitCount(postId: Int)
 }
