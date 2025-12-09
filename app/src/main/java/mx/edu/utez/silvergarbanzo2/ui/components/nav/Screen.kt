@@ -19,6 +19,8 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
     object Login : Screen("login", "Login", Icons.Default.Lock)
     object Register : Screen("register", "Registro", Icons.Default.Person)
     object Post : Screen("post","CrearPublicacion", Icons.Default.Add)
+    object PostsList : Screen("list","ListaPublicacion", Icons.Default.LocationOn)
+
 }
 val navBarItems = listOf(
     Screen.Map,
