@@ -23,53 +23,53 @@ import retrofit2.http.Query
 interface ApiService {
 
     //Login y regitrp
-    @POST("auth/register")
+    @POST("api/auth/register")
     suspend fun registrarUsuario(@Body user: UserRequest): Response<ResponseBody>
 
-    @POST("auth/login")
+    @POST("api/auth/login")
     suspend fun loginUsuario(@Body loginRequest: LoginRequest): Response<User>
 
     //Publicaciones o posts
-    @GET("posts")
+    @GET("api/posts")
     suspend fun getPublicPosts(): Response<List<Post>>
 
-    @GET("posts/user/{userId}")
+    @GET("api/posts/user/{userId}")
     suspend fun getUserPosts(@Path("userId") userId: Int): Response<List<Post>>
 
-    @GET("posts/top")
+    @GET("api/posts/top")
     suspend fun getTopVisitedPosts(@Query("limit") limit: Int = 5): Response<List<Post>>
 
     @Multipart
-    @POST("posts")
+    @POST("api/posts")
     suspend fun createPost(
         @PartMap postData: Map<String, @JvmSuppressWildcards RequestBody>,
         @Part imagenes: List<MultipartBody.Part>
     ): Response<Post>
 
-    @PUT("posts/{id}")
+    @PUT("api/posts/{id}")
     suspend fun updatePost(
         @Path("id") id: Int,
         @Body post: Post
     ): Response<ResponseBody>
 
-    @DELETE("posts/{id}")
+    @DELETE("api/posts/{id}")
     suspend fun deletePost(@Path("id") id: Int): Response<ResponseBody>
 
-    @POST("posts/{id}/visit")
+    @POST("api/posts/{id}/visit")
     suspend fun incrementVisitCount(@Path("id") id: Int): Response<ResponseBody>
 
     // ========== USERS ==========
-    @GET("users/{id}")
+    @GET("api/users/{id}")
     suspend fun getUserProfile(@Path("id") id: Int): Response<User>
 
-    @PUT("users/{id}")
+    @PUT("api/users/{id}")
     suspend fun updateUserProfile(
         @Path("id") id: Int,
         @Body user: User
     ): Response<User>
 
     // Para autenticación con token
-    @GET("posts/private")
+    @GET("api/posts/private")
     suspend fun getPrivatePosts(
         @Header("Authorization") token: String
     ): Response<List<Post>>
