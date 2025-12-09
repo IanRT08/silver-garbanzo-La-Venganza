@@ -2,6 +2,7 @@ package mx.edu.utez.silvergarbanzo2.ui.components.nav
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Menu
@@ -17,6 +18,7 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
 
     object Login : Screen("login", "Login", Icons.Default.Lock)
     object Register : Screen("register", "Registro", Icons.Default.Person)
+    object Post : Screen("post","CrearPublicacion", Icons.Default.Add)
 }
 val navBarItems = listOf(
     Screen.Map,
