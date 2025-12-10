@@ -44,7 +44,7 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ){
 
-        //CircleImage(R.drawable.silverGarbanzologo)
+        CircleImage(R.drawable.silvergarbanzologo)
 
         Title(text = "Iniciar Sesión")
 
