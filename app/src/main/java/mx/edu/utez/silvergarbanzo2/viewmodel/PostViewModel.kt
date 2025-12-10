@@ -117,4 +117,18 @@ class PostViewModel(private val repository: PostRepository) : ViewModel() {
         currentLongitude = lng
         currentAddress = address
     }
+
+    fun loadUserPosts(userId: Int) {
+        isLoading = true
+        viewModelScope.launch {
+            val result = repository.getUserPosts(userId)
+            isLoading = false
+            result.onSuccess { postList ->
+                posts = postList
+                errorMessage = null
+            }.onFailure { error ->
+                errorMessage = error.message
+            }
+        }
+    }
 }

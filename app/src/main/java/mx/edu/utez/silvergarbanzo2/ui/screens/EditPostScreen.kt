@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
@@ -266,7 +267,7 @@ fun EditPostScreen(
                 onClick = { imagePickerLauncher.launch("image/*") },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.Default.AddPhotoAlternate, contentDescription = null)
+                Icon(Icons.Default.AccountCircle, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Agregar más imágenes")
             }

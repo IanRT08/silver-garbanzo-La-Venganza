@@ -39,7 +39,7 @@ fun AppNavigation() {
     val context = LocalContext.current
     val application = context.applicationContext as Application
 
-    // Usuario actual (debería venir de tu sesión/SharedPreferences)
+    //Usuario actual
     var currentUser by remember {
         mutableStateOf(
             User(
