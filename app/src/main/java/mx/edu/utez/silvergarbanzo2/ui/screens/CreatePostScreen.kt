@@ -28,11 +28,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,12 +54,13 @@ import java.util.Locale
 @Composable
 fun CreatePostScreen(
     viewModel: PostViewModel,
-    onNavigateBack: ()-> Unit,
+    currentUserId: Int,
+    onNavigateBack: () -> Unit,
     onPostCreated: () -> Unit
 ) {
     val context = LocalContext.current
     var showDatePicker by remember { mutableStateOf(false) }
-    var selectedImageUris by remember {mutableStateOf<List<Uri>>(emptyList())}
+    var selectedImageUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
@@ -73,21 +69,24 @@ fun CreatePostScreen(
         val files = uris.mapNotNull { uri ->
             uriToFile(context, uri)
         }
-        files.forEach { viewModel.addImage(it)}
+        files.forEach { viewModel.addImage(it) }
     }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions->
+    ) { permissions ->
         if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true) {
+            permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        ) {
             getCurrentLocation(context) { lat, lng, address ->
                 viewModel.updateLocation(lat, lng, address)
                 Toast.makeText(context, "Ubicación capturada", Toast.LENGTH_SHORT).show()
             }
         } else {
-            Toast.makeText(context, "Permiso de ubicación denegado",
-                Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                context, "Permiso de ubicación denegado",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -113,20 +112,20 @@ fun CreatePostScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
-        ){
-            //Titulo
+        ) {
+            // Titulo
             OutlinedTextField(
                 value = viewModel.titulo,
-                onValueChange = { viewModel.titulo=it},
-                label = {Text("Titulo")},
+                onValueChange = { viewModel.titulo = it },
+                label = { Text("Titulo") },
                 modifier = Modifier.fillMaxWidth()
             )
 
-            //Descripcion
+            // Descripcion
             OutlinedTextField(
                 value = viewModel.descripcion,
-                onValueChange = { viewModel.descripcion=it},
-                label = {Text("Descripcion")},
+                onValueChange = { viewModel.descripcion = it },
+                label = { Text("Descripcion") },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -144,7 +143,6 @@ fun CreatePostScreen(
                 }
             )
 
-            // Selector de fecha
             if (showDatePicker) {
                 val datePickerState = rememberDatePickerState()
                 DatePickerDialog(
@@ -174,16 +172,15 @@ fun CreatePostScreen(
                     DatePicker(state = datePickerState)
                 }
             }
+
             Divider()
 
-            // SECCIÓN DE UBICACIÓN
             Text(
                 text = "Ubicación",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
-            // Botón para capturar ubicación GPS
             Button(
                 onClick = {
                     locationPermissionLauncher.launch(
@@ -200,7 +197,6 @@ fun CreatePostScreen(
                 Text("Capturar Ubicación Actual")
             }
 
-            // Mostrar ubicación capturada
             if (viewModel.currentLatitude != 0.0 && viewModel.currentLongitude != 0.0) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -228,7 +224,6 @@ fun CreatePostScreen(
                 }
             }
 
-            // Dirección manual (opcional)
             OutlinedTextField(
                 value = viewModel.currentAddress ?: "",
                 onValueChange = { viewModel.currentAddress = it },
@@ -239,14 +234,12 @@ fun CreatePostScreen(
 
             Divider()
 
-            // SECCIÓN DE IMÁGENES
             Text(
                 text = "Imágenes",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
-            // Botón para seleccionar imágenes
             OutlinedButton(
                 onClick = { imagePickerLauncher.launch("image/*") },
                 modifier = Modifier.fillMaxWidth()
@@ -256,7 +249,6 @@ fun CreatePostScreen(
                 Text("Seleccionar Imágenes")
             }
 
-            // Preview de imágenes seleccionadas
             if (selectedImageUris.isNotEmpty()) {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -273,7 +265,6 @@ fun CreatePostScreen(
                                     .clip(RoundedCornerShape(8.dp)),
                                 contentScale = ContentScale.Crop
                             )
-                            // Botón para eliminar imagen
                             IconButton(
                                 onClick = {
                                     selectedImageUris = selectedImageUris.toMutableList().apply {
@@ -297,9 +288,9 @@ fun CreatePostScreen(
                     }
                 }
             }
+
             Divider()
 
-            // Switch de privacidad
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -324,7 +315,6 @@ fun CreatePostScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Botón de crear
             Button(
                 onClick = {
                     if (validateForm(viewModel, context)) {
@@ -348,7 +338,6 @@ fun CreatePostScreen(
                 }
             }
 
-            // Mostrar error si existe
             viewModel.errorMessage?.let { error ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -392,7 +381,7 @@ private fun validateForm(viewModel: PostViewModel, context: Context): Boolean {
 private fun getCurrentLocation(
     context: Context,
     onLocationReceived: (Double, Double, String?) -> Unit
-){
+) {
     val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
     try {
@@ -400,7 +389,8 @@ private fun getCurrentLocation(
             location?.let {
                 onLocationReceived(it.latitude, it.longitude, null)
             } ?: run {
-                Toast.makeText(context, "No se pudo obtener la ubicación", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "No se pudo obtener la ubicación", Toast.LENGTH_SHORT)
+                    .show()
             }
         }
     } catch (e: SecurityException) {
@@ -422,4 +412,3 @@ private fun uriToFile(context: Context, uri: Uri): File? {
         null
     }
 }
-
