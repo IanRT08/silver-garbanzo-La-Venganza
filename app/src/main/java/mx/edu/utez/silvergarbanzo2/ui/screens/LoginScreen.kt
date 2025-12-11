@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import mx.edu.utez.silvergarbanzo2.R
+import mx.edu.utez.silvergarbanzo2.data.model.User
 import mx.edu.utez.silvergarbanzo2.ui.components.buttons.PrimaryButton
 import mx.edu.utez.silvergarbanzo2.ui.components.images.CircleImage
 import mx.edu.utez.silvergarbanzo2.ui.components.inputs.PasswordField
@@ -26,13 +27,13 @@ import mx.edu.utez.silvergarbanzo2.viewmodel.LoginViewModel
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel,
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (User) -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
-    // Observar si el login fue exitoso para navegar
+
     LaunchedEffect(viewModel.isLoginSuccess) {
-        if (viewModel.isLoginSuccess) {
-            onLoginSuccess()
+        if (viewModel.isLoginSuccess && viewModel.user != null) {
+            onLoginSuccess(viewModel.user!!)
         }
     }
 
@@ -89,7 +90,5 @@ fun LoginScreen(
             text = "¿No tienes cuenta? Regístrate aquí",
             onClick = onNavigateToRegister
         )
-
     }
-
 }

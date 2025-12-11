@@ -58,12 +58,6 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
-// Room (Base de datos)
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    implementation(libs.material3)
-    ksp(libs.androidx.room.compiler)
-
 // DataStore (Preferencias)
     implementation(libs.androidx.datastore.preferences)
 

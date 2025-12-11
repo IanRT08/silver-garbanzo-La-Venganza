@@ -213,7 +213,7 @@ fun ProfileScreen(
                                 AssistChip(
                                     onClick = { },
                                     label = {
-                                        Text(if (post.esPrivado) "🔒 Privado" else "🌍 Público")
+                                        Text(if (post.esPrivado) "Privado" else "Público")
                                     }
                                 )
 

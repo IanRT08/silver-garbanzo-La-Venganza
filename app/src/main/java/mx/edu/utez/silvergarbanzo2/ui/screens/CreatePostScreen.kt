@@ -46,8 +46,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.location.LocationManagerCompat.getCurrentLocation
-import androidx.room.util.TableInfo
 import coil.compose.rememberAsyncImagePainter
 import com.google.android.gms.location.LocationServices
 import mx.edu.utez.silvergarbanzo2.viewmodel.PostViewModel
@@ -119,11 +117,17 @@ fun CreatePostScreen(
             //Titulo
             OutlinedTextField(
                 value = viewModel.titulo,
+                onValueChange = { viewModel.titulo=it},
+                label = {Text("Titulo")},
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            //Descripcion
+            OutlinedTextField(
+                value = viewModel.descripcion,
                 onValueChange = { viewModel.descripcion=it},
-                label = {Text("Descripcion *")},
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 3,
-                maxLines = 5
+                label = {Text("Descripcion")},
+                modifier = Modifier.fillMaxWidth()
             )
 
             // Fecha de visita

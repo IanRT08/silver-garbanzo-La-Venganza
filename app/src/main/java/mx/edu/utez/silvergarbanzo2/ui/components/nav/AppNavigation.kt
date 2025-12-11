@@ -1,6 +1,7 @@
 package mx.edu.utez.silvergarbanzo2.ui.components.nav
 
 import android.app.Application
+import android.content.Context
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -18,7 +19,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import mx.edu.utez.silvergarbanzo2.data.local.AppDatabase
 import mx.edu.utez.silvergarbanzo2.data.model.User
 import mx.edu.utez.silvergarbanzo2.data.remote.ApiService
 import mx.edu.utez.silvergarbanzo2.data.remote.RetrofitClient
@@ -38,26 +38,30 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val context = LocalContext.current
     val application = context.applicationContext as Application
+    val sharedPrefs = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
 
-    //Usuario actual
     var currentUser by remember {
         mutableStateOf(
             User(
-                id = 1,
-                nombre = "Usuario",
-                apellidos = "Ejemplo",
-                correo = "usuario@ejemplo.com"
+                id = sharedPrefs.getInt("user_id", 0),
+                nombre = sharedPrefs.getString("user_nombre", "Usuario") ?: "Usuario",
+                apellidos = sharedPrefs.getString("user_apellidos", "Ejemplo") ?: "Ejemplo",
+                correo = sharedPrefs.getString("user_correo", "") ?: "",
+                token = sharedPrefs.getString("user_token", null),
+                fotoPerfil = sharedPrefs.getString("user_foto", null),
+                fechaRegistro = sharedPrefs.getString("user_fecha_registro", "") ?: "",
+                totalPublicaciones = sharedPrefs.getInt("user_total_publicaciones", 0),
+                totalVisitas = sharedPrefs.getInt("user_total_visitas", 0)
             )
         )
     }
 
-    // 1. Dependencias
+    // Dependencias (SIN DATABASE)
     val apiService = RetrofitClient.apiService
-    val database = AppDatabase.getDatabase(context)
     val userRepository = UserRepository(apiService as ApiService)
-    val postRepository = PostRepository(apiService, database.postDao())
+    val postRepository = PostRepository(apiService)
 
-    // 2. ViewModels
+    // ViewModels
     val registerViewModel: RegisterViewModel =
         viewModel(factory = RegisterViewModelFactory(userRepository))
     val loginViewModel: LoginViewModel =
@@ -66,8 +70,8 @@ fun AppNavigation() {
         viewModel(factory = PostViewModelFactory(postRepository))
 
     // Lógica para ocultar barra de navegación
-    val navBackStackEntry = navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry.value?.destination?.route
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
     val showBottomBar = navBarItems.any { it.route == currentRoute }
 
     Scaffold(
@@ -91,7 +95,10 @@ fun AppNavigation() {
                     },
                     onLoginSuccess = {
                         navController.navigate(Screen.Tarjetas.route) {
-                            popUpTo(Screen.Login.route) { inclusive = true }
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
                         }
                     }
                 )
@@ -102,9 +109,7 @@ fun AppNavigation() {
                 RegisterScreen(
                     viewModel = registerViewModel,
                     onRegistrationSuccess = {
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(Screen.Register.route) { inclusive = true }
-                        }
+                        navController.popBackStack()
                     },
                     onNavigateBack = {
                         navController.popBackStack()
@@ -160,7 +165,7 @@ fun AppNavigation() {
                 )
             }
 
-            // --- MIS LUGARES (mismo que perfil por ahora) ---
+            // --- MIS LUGARES ---
             composable(Screen.MyLocations.route) {
                 ProfileScreen(
                     user = currentUser,

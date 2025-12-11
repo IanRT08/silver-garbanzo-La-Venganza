@@ -13,7 +13,6 @@ kotlin = "2.0.0"
 ksp = "2.0.0-1.0.22"
 lifecycleRuntimeKtx = "2.8.3"
 lifecycleViewmodel = "2.8.3"
-room = "2.6.1"
 accompanistPager = "0.34.0"
 navigationCompose = "2.8.3"
 material3 = "1.4.0"
@@ -42,9 +41,6 @@ androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 androidx-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 androidx-material3 = { module = "androidx.compose.material3:material3" }
-androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
-androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
-androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 junit = { module = "junit:junit", version.ref = "junit" }
 osmdroid-android = { group = "org.osmdroid", name = "osmdroid-android", version = "6.1.17" }

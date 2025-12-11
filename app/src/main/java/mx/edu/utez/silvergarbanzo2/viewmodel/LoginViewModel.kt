@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import mx.edu.utez.silvergarbanzo2.data.model.User
 import mx.edu.utez.silvergarbanzo2.data.repository.UserRepository
 
 class LoginViewModel(private val repository: UserRepository) : ViewModel() {
@@ -14,12 +15,14 @@ class LoginViewModel(private val repository: UserRepository) : ViewModel() {
     var isLoading by mutableStateOf(false)
     var errorMessage by mutableStateOf<String?>(null)
 
-    // Estado para notificar a la UI que debe navegar
+    var user by mutableStateOf<User?>(null)
+        private set
+
     var isLoginSuccess by mutableStateOf(false)
 
     fun onLoginClick() {
         if (correo.isBlank() || password.isBlank()) {
-            errorMessage = "Ingresa matrícula y contraseña"
+            errorMessage = "Ingresa correo y contraseña"
             return
         }
 
@@ -30,8 +33,9 @@ class LoginViewModel(private val repository: UserRepository) : ViewModel() {
             val result = repository.login(correo, password)
             isLoading = false
 
-            result.onSuccess {
-                isLoginSuccess = true // Esto disparará la navegación en la UI
+            result.onSuccess { loggedUser ->
+                user = loggedUser
+                isLoginSuccess = true
             }.onFailure { error ->
                 errorMessage = error.message ?: "Error al iniciar sesión"
             }

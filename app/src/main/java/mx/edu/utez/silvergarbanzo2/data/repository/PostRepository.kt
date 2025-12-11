@@ -1,8 +1,5 @@
 package mx.edu.utez.silvergarbanzo2.data.repository
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import mx.edu.utez.silvergarbanzo2.data.dao.PostDao
 import mx.edu.utez.silvergarbanzo2.data.model.Post
 import mx.edu.utez.silvergarbanzo2.data.remote.ApiService
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -13,35 +10,19 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
 class PostRepository(
-    private val apiService: ApiService,
-    private val postDao: PostDao
+    private val apiService: ApiService
 ) {
 
     suspend fun getPublicPosts(): Result<List<Post>> {
         return try {
             val response = apiService.getPublicPosts()
             if (response.isSuccessful) {
-                val posts = response.body() ?: emptyList()
-                // Guardar en caché local
-                withContext(Dispatchers.IO) {
-                    posts.forEach { postDao.insertPost(it) }
-                }
-                Result.success(posts)
+                Result.success(response.body() ?: emptyList())
             } else {
                 Result.failure(Exception("Error: ${response.code()} - ${response.errorBody()?.string()}"))
             }
         } catch (e: Exception) {
-            // Fallback a caché local
-            try {
-                val cachedPosts = postDao.getPublicPosts()
-                if (cachedPosts.isNotEmpty()) {
-                    Result.success(cachedPosts)
-                } else {
-                    Result.failure(e)
-                }
-            } catch (dbException: Exception) {
-                Result.failure(e)
-            }
+            Result.failure(e)
         }
     }
 
@@ -50,7 +31,6 @@ class PostRepository(
         imageFiles: List<File>
     ): Result<Post> {
         return try {
-            // Convertir archivos a MultipartBody.Part
             val imageParts = imageFiles.mapIndexed { index, file ->
                 val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
                 MultipartBody.Part.createFormData(
@@ -65,9 +45,6 @@ class PostRepository(
             if (response.isSuccessful) {
                 val post = response.body()
                 if (post != null) {
-                    withContext(Dispatchers.IO) {
-                        postDao.insertPost(post)
-                    }
                     Result.success(post)
                 } else {
                     Result.failure(Exception("Respuesta vacía del servidor"))
@@ -90,7 +67,6 @@ class PostRepository(
         esPrivado: Boolean = false,
         imageFiles: List<File>
     ): Result<Post> {
-        // Crear map de datos para multipart
         val postData = mapOf(
             "titulo" to titulo.toRequestBody("text/plain".toMediaTypeOrNull()),
             "descripcion" to descripcion.toRequestBody("text/plain".toMediaTypeOrNull()),
@@ -108,9 +84,6 @@ class PostRepository(
         return try {
             val response = apiService.updatePost(post.id, post)
             if (response.isSuccessful) {
-                withContext(Dispatchers.IO) {
-                    postDao.updatePost(post)
-                }
                 Result.success(true)
             } else {
                 Result.failure(Exception("Error: ${response.code()}"))
@@ -124,10 +97,6 @@ class PostRepository(
         return try {
             val response = apiService.deletePost(postId)
             if (response.isSuccessful) {
-                withContext(Dispatchers.IO) {
-                    val post = postDao.getPostById(postId)
-                    post?.let { postDao.deletePost(it) }
-                }
                 Result.success(true)
             } else {
                 Result.failure(Exception("Error: ${response.code()}"))
@@ -139,17 +108,9 @@ class PostRepository(
 
     suspend fun incrementVisitCount(postId: Int) {
         try {
-            // Primero actualizar en servidor
             apiService.incrementVisitCount(postId)
-            // Luego en caché local
-            withContext(Dispatchers.IO) {
-                postDao.incrementVisitCount(postId)
-            }
         } catch (e: Exception) {
-            // Si falla el servidor, al menos actualizar local
-            withContext(Dispatchers.IO) {
-                postDao.incrementVisitCount(postId)
-            }
+            // Ignorar errores silenciosamente
         }
     }
 
@@ -157,24 +118,12 @@ class PostRepository(
         return try {
             val response = apiService.getUserPosts(userId)
             if (response.isSuccessful) {
-                val posts = response.body() ?: emptyList()
-                withContext(Dispatchers.IO) {
-                    posts.forEach { postDao.insertPost(it) }
-                }
-                Result.success(posts)
+                Result.success(response.body() ?: emptyList())
             } else {
-                // Fallback a caché
-                val cachedPosts = postDao.getPostsByUser(userId)
-                Result.success(cachedPosts)
+                Result.failure(Exception("Error: ${response.code()}"))
             }
         } catch (e: Exception) {
-            // Fallback a caché
-            val cachedPosts = postDao.getPostsByUser(userId)
-            if (cachedPosts.isNotEmpty()) {
-                Result.success(cachedPosts)
-            } else {
-                Result.failure(e)
-            }
+            Result.failure(e)
         }
     }
 
@@ -184,22 +133,10 @@ class PostRepository(
             if (response.isSuccessful) {
                 Result.success(response.body() ?: emptyList())
             } else {
-                // Intentar obtener del caché local ordenando por visitas
-                val cachedPosts = postDao.getPublicPosts()
-                    .sortedByDescending { it.contadorVisitas }
-                    .take(limit)
-                Result.success(cachedPosts)
+                Result.failure(Exception("Error: ${response.code()}"))
             }
         } catch (e: Exception) {
-            val cachedPosts = postDao.getPublicPosts()
-                .sortedByDescending { it.contadorVisitas }
-                .take(limit)
-            Result.success(cachedPosts)
+            Result.failure(e)
         }
     }
-}
-
-// Helper extension (si no está en otro archivo)
-private fun String.toRequestBody(mediaType: okhttp3.MediaType? = null): RequestBody {
-    return this.toRequestBody(mediaType)
 }
