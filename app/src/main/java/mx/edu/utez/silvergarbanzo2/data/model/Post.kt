@@ -19,10 +19,22 @@ data class Post(
     @SerializedName("imagenes") val imagenesString: String = "",
     @SerializedName("es_privado") val esPrivado: Boolean = false
 ) {
+    companion object {
+        private const val BASE_URL = "https://chivalrously-overfat-kieth.ngrok-free.dev"
+    }
+
     val imagenes: List<String>
         get() = try {
             if (imagenesString.isNotEmpty()) {
-                Gson().fromJson(imagenesString, Array<String>::class.java).toList()
+                val urls = Gson().fromJson(imagenesString, Array<String>::class.java).toList()
+                // Convertir URLs relativas a absolutas
+                urls.map { url ->
+                    if (url.startsWith("http")) {
+                        url // Ya es absoluta
+                    } else {
+                        "$BASE_URL$url" // Agregar base URL
+                    }
+                }
             } else {
                 emptyList()
             }
