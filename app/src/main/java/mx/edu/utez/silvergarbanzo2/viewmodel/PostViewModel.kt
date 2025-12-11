@@ -9,8 +9,6 @@ import kotlinx.coroutines.launch
 import mx.edu.utez.silvergarbanzo2.data.model.Post
 import mx.edu.utez.silvergarbanzo2.data.repository.PostRepository
 import java.io.File
-import kotlin.collections.filter
-import kotlin.collections.map
 
 class PostViewModel(private val repository: PostRepository) : ViewModel() {
 
@@ -35,6 +33,7 @@ class PostViewModel(private val repository: PostRepository) : ViewModel() {
 
     fun loadPublicPosts() {
         isLoading = true
+        errorMessage = null
         viewModelScope.launch {
             val result = repository.getPublicPosts()
             isLoading = false
@@ -48,6 +47,7 @@ class PostViewModel(private val repository: PostRepository) : ViewModel() {
 
     fun createNewPost() {
         isLoading = true
+        errorMessage = null
         viewModelScope.launch {
             val result = repository.createPostWithUris(
                 titulo = titulo,
@@ -69,11 +69,64 @@ class PostViewModel(private val repository: PostRepository) : ViewModel() {
         }
     }
 
+    // Método para actualizar una publicación
+    fun updatePost(
+        postId: Int,
+        titulo: String,
+        descripcion: String,
+        fechaVisita: String,
+        direccion: String?,
+        esPrivado: Boolean
+    ) {
+        isLoading = true
+        errorMessage = null
+        viewModelScope.launch {
+            // Buscar el post actual
+            val currentPost = posts.find { it.id == postId }
+
+            if (currentPost == null) {
+                errorMessage = "Publicación no encontrada"
+                isLoading = false
+                return@launch
+            }
+
+            // Crear post actualizado (manteniendo ubicación e imágenes)
+            val updatedPost = currentPost.copy(
+                titulo = titulo,
+                descripcion = descripcion,
+                fechaVisita = fechaVisita,
+                direccion = direccion,
+                esPrivado = esPrivado
+            )
+
+            val result = repository.updatePost(updatedPost)
+            isLoading = false
+
+            result.onSuccess { success ->
+                if (success) {
+                    // Actualizar en la lista local
+                    posts = posts.map { post ->
+                        if (post.id == postId) updatedPost else post
+                    }
+                    errorMessage = null
+                } else {
+                    errorMessage = "Error al actualizar"
+                }
+            }.onFailure { error ->
+                errorMessage = error.message
+            }
+        }
+    }
+
     fun deletePost(postId: Int) {
+        isLoading = true
+        errorMessage = null
         viewModelScope.launch {
             val result = repository.deletePost(postId)
+            isLoading = false
             result.onSuccess {
                 posts = posts.filter { it.id != postId }
+                errorMessage = null
             }.onFailure { error ->
                 errorMessage = error.message
             }
@@ -100,6 +153,9 @@ class PostViewModel(private val repository: PostRepository) : ViewModel() {
         fechaVisita = ""
         selectedImages = emptyList()
         isPrivate = false
+        currentLatitude = 0.0
+        currentLongitude = 0.0
+        currentAddress = null
     }
 
     fun addImage(file: File) {
@@ -120,6 +176,7 @@ class PostViewModel(private val repository: PostRepository) : ViewModel() {
 
     fun loadUserPosts(userId: Int) {
         isLoading = true
+        errorMessage = null
         viewModelScope.launch {
             val result = repository.getUserPosts(userId)
             isLoading = false
