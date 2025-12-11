@@ -1,7 +1,10 @@
 package mx.edu.utez.silvergarbanzo2.ui.screens
 
 import android.content.Context
-import android.graphics.Color
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.drawable.BitmapDrawable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,11 +25,10 @@ import mx.edu.utez.silvergarbanzo2.viewmodel.PostViewModel
 fun MapScreen(
     postViewModel: PostViewModel,
     currentUserId: Int,
-    onMarkerClick: (Int) -> Unit // Navegar al detalle del post
+    onMarkerClick: (Int) -> Unit
 ) {
     val context = LocalContext.current
 
-    // Cargar todas las publicaciones públicas
     LaunchedEffect(Unit) {
         postViewModel.loadPublicPosts()
     }
@@ -55,11 +57,19 @@ fun MapScreen(
                     modifier = Modifier.fillMaxSize()
                 )
             } else {
-                // Mostrar mensaje si no hay publicaciones
-                Text(
-                    text = "No hay ubicaciones para mostrar",
-                    modifier = Modifier.padding(16.dp)
-                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                ) {
+                    if (postViewModel.isLoading) {
+                        CircularProgressIndicator()
+                    } else {
+                        Text("No hay ubicaciones para mostrar")
+                    }
+                }
             }
         }
     }
@@ -80,35 +90,35 @@ private fun createMapView(
 ): MapView {
     val mapView = MapView(context)
 
-    // Configuración básica del mapa
     mapView.setTileSource(TileSourceFactory.MAPNIK)
     mapView.setMultiTouchControls(true)
     mapView.controller.setZoom(15.0)
 
-    // Centrar el mapa en la primera ubicación disponible
     if (posts.isNotEmpty()) {
         val firstPost = posts.first()
         mapView.controller.setCenter(GeoPoint(firstPost.latitud, firstPost.longitud))
     }
 
-    // Agregar marcadores para cada publicación
     posts.forEach { post ->
         val marker = Marker(mapView)
         marker.position = GeoPoint(post.latitud, post.longitud)
         marker.title = post.titulo
         marker.snippet = post.descripcion
 
-        // Determinar el color del marcador según el tipo
-        val markerColor = when {
-            post.usuarioId == currentUserId && post.esPrivado -> Color.RED // Mis lugares privados
-            post.usuarioId == currentUserId -> Color.GREEN // Mis lugares públicos
-            else -> Color.BLUE // Lugares de otros usuarios
+        // Determinar el color según el tipo de publicación
+        val color = when {
+            post.usuarioId == currentUserId && post.esPrivado ->
+                android.graphics.Color.RED // Mis lugares privados
+            post.usuarioId == currentUserId ->
+                android.graphics.Color.GREEN // Mis lugares públicos
+            else ->
+                android.graphics.Color.BLUE // Lugares de otros usuarios
         }
 
-        // Configurar el ícono del marcador con color
+        // Crear icono personalizado con el color correcto
+        marker.icon = createColoredMarkerIcon(context, color)
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
 
-        // Evento al hacer click en el marcador
         marker.setOnMarkerClickListener { clickedMarker, _ ->
             onMarkerClick(post.id)
             true
@@ -118,4 +128,30 @@ private fun createMapView(
     }
 
     return mapView
+}
+
+// Crear icono de marcador con color personalizado
+private fun createColoredMarkerIcon(context: Context, color: Int): BitmapDrawable {
+    val size = 80
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+
+    val paint = Paint().apply {
+        this.color = color
+        style = Paint.Style.FILL
+        isAntiAlias = true
+    }
+
+    // Dibujar un círculo
+    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+
+    // Borde blanco
+    paint.apply {
+        this.color = android.graphics.Color.WHITE
+        style = Paint.Style.STROKE
+        strokeWidth = 4f
+    }
+    canvas.drawCircle(size / 2f, size / 2f, size / 3f, paint)
+
+    return BitmapDrawable(context.resources, bitmap)
 }
