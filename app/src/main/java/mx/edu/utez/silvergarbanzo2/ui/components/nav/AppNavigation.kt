@@ -56,7 +56,24 @@ fun AppNavigation() {
         )
     }
 
-    // Dependencias (SIN DATABASE)
+    // Función para guardar usuario en SharedPreferences
+    fun saveUserSession(user: User) {
+        sharedPrefs.edit().apply {
+            putInt("user_id", user.id)
+            putString("user_nombre", user.nombre)
+            putString("user_apellidos", user.apellidos)
+            putString("user_correo", user.correo)
+            putString("user_token", user.token)
+            putString("user_foto", user.fotoPerfil)
+            putString("user_fecha_registro", user.fechaRegistro)
+            putInt("user_total_publicaciones", user.totalPublicaciones)
+            putInt("user_total_visitas", user.totalVisitas)
+            apply()
+        }
+        currentUser = user
+    }
+
+    // Dependencias
     val apiService = RetrofitClient.apiService
     val userRepository = UserRepository(apiService as ApiService)
     val postRepository = PostRepository(apiService)
@@ -93,7 +110,10 @@ fun AppNavigation() {
                     onNavigateToRegister = {
                         navController.navigate(Screen.Register.route)
                     },
-                    onLoginSuccess = {
+                    onLoginSuccess = { user ->
+
+                        saveUserSession(user)
+
                         navController.navigate(Screen.Tarjetas.route) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
@@ -145,6 +165,7 @@ fun AppNavigation() {
             composable(Screen.Post.route) {
                 CreatePostScreen(
                     viewModel = postViewModel,
+                    currentUserId = currentUser.id,
                     onNavigateBack = {
                         navController.popBackStack()
                     },
@@ -167,14 +188,14 @@ fun AppNavigation() {
 
             // --- MIS LUGARES ---
             composable(Screen.MyLocations.route) {
-                ProfileScreen(
+                MyLocationsScreen(
                     user = currentUser,
                     postViewModel = postViewModel,
                     onCreatePostClick = {
                         navController.navigate(Screen.Post.route)
                     },
-                    onEditPostClick = { postId ->
-                        navController.navigate("edit_post/$postId")
+                    onPostClick = { postId ->
+                        navController.navigate("post_detail/$postId")
                     }
                 )
             }
