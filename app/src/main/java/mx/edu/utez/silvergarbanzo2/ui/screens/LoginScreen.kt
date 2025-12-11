@@ -47,9 +47,11 @@ fun LoginScreen(
 
         CircleImage(R.drawable.silvergarbanzologo)
 
+        Spacer(modifier = Modifier.height(16.dp))
+        
         Title(text = "Iniciar Sesión")
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         UserInputField(
             value = viewModel.correo,

@@ -1,6 +1,5 @@
 package mx.edu.utez.silvergarbanzo2.ui.components.nav
 
-import android.app.Application
 import android.content.Context
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,7 +36,6 @@ import mx.edu.utez.silvergarbanzo2.viewmodel.factories.RegisterViewModelFactory
 fun AppNavigation() {
     val navController = rememberNavController()
     val context = LocalContext.current
-    val application = context.applicationContext as Application
     val sharedPrefs = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
 
     var currentUser by remember {
@@ -52,7 +50,11 @@ fun AppNavigation() {
                 fechaRegistro = sharedPrefs.getString("user_fecha_registro", "") ?: "",
                 totalPublicaciones = sharedPrefs.getInt("user_total_publicaciones", 0),
                 totalVisitas = sharedPrefs.getInt("user_total_visitas", 0)
-            )
+            ).also { user ->
+                if (user.token != null) {
+                    RetrofitClient.setAuthToken(user.token)
+                }
+            }
         )
     }
 
@@ -111,9 +113,7 @@ fun AppNavigation() {
                         navController.navigate(Screen.Register.route)
                     },
                     onLoginSuccess = { user ->
-
                         saveUserSession(user)
-
                         navController.navigate(Screen.Tarjetas.route) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true

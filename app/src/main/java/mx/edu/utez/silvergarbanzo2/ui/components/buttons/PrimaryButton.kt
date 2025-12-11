@@ -18,7 +18,7 @@ fun PrimaryButton(
         shape = MaterialTheme.shapes.medium,
         elevation = ButtonDefaults.buttonElevation(4.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF4CAF50)
+            containerColor = Color(0xFF555562)
         )
 
     ) {
