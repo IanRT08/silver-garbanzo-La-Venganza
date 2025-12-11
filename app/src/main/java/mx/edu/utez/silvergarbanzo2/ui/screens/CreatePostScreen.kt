@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,6 +62,13 @@ fun CreatePostScreen(
     val context = LocalContext.current
     var showDatePicker by remember { mutableStateOf(false) }
     var selectedImageUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+
+    // Limpiar campos cuando se desmonta la pantalla
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.clearFormFields()
+        }
+    }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
@@ -95,7 +103,10 @@ fun CreatePostScreen(
             TopAppBar(
                 title = { Text("Crear publicación") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        viewModel.clearFormFields() //Limpiar al volver
+                        onNavigateBack()
+                    }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                     }
                 },

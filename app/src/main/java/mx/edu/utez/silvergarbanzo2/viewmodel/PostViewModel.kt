@@ -69,7 +69,7 @@ class PostViewModel(private val repository: PostRepository) : ViewModel() {
         }
     }
 
-    // Método para actualizar una publicación
+    //Metodo para actualizar una publicación
     fun updatePost(
         postId: Int,
         titulo: String,
@@ -156,6 +156,11 @@ class PostViewModel(private val repository: PostRepository) : ViewModel() {
         currentLatitude = 0.0
         currentLongitude = 0.0
         currentAddress = null
+    }
+
+    //Función pública para limpiar desde la UI
+    fun clearFormFields() {
+        clearForm()
     }
 
     fun addImage(file: File) {
