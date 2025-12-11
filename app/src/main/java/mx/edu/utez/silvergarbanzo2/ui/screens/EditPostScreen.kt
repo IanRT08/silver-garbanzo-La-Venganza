@@ -7,22 +7,19 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,15 +30,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import mx.edu.utez.silvergarbanzo2.data.model.Post
-import mx.edu.utez.silvergarbanzo2.ui.components.buttons.PrimaryButton
-import mx.edu.utez.silvergarbanzo2.ui.components.inputs.UserInputField
-import mx.edu.utez.silvergarbanzo2.ui.components.texts.Title
-import mx.edu.utez.silvergarbanzo2.viewmodel.EditPostViewModel
 import mx.edu.utez.silvergarbanzo2.viewmodel.PostViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,9 +43,9 @@ fun EditPostScreen(
     onNavigateBack: () -> Unit,
     onPostUpdated: () -> Unit
 ) {
+    val context = LocalContext.current
 
     // Estados locales para edición
-    val context = LocalContext.current
     var titulo by remember { mutableStateOf(post.titulo) }
     var descripcion by remember { mutableStateOf(post.descripcion) }
     var fechaVisita by remember { mutableStateOf(post.fechaVisita) }
@@ -62,6 +54,10 @@ fun EditPostScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var selectedImageUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var existingImages by remember { mutableStateOf(post.imagenes) }
+
+    // Observar el estado del ViewModel
+    val isLoading = viewModel.isLoading
+    val errorMessage = viewModel.errorMessage
 
     // Launcher para seleccionar nuevas imágenes
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -101,7 +97,8 @@ fun EditPostScreen(
                 onValueChange = { titulo = it },
                 label = { Text("Título *") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                enabled = !isLoading
             )
 
             // Descripción
@@ -111,16 +108,18 @@ fun EditPostScreen(
                 label = { Text("Descripción *") },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
-                maxLines = 5
+                maxLines = 5,
+                enabled = !isLoading
             )
 
             // Fecha de visita
             OutlinedTextField(
-                value = fechaVisita,
+                value = formatDateForDisplay(fechaVisita),
                 onValueChange = { },
                 label = { Text("Fecha de visita *") },
                 modifier = Modifier.fillMaxWidth(),
                 readOnly = true,
+                enabled = !isLoading,
                 trailingIcon = {
                     IconButton(onClick = { showDatePicker = true }) {
                         Icon(Icons.Default.DateRange, contentDescription = "Cambiar fecha")
@@ -157,13 +156,15 @@ fun EditPostScreen(
                     DatePicker(state = datePickerState)
                 }
             }
+
             // Dirección manual
             OutlinedTextField(
                 value = direccion,
                 onValueChange = { direccion = it },
                 label = { Text("Dirección") },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Opcional") }
+                placeholder = { Text("Opcional") },
+                enabled = !isLoading
             )
 
             Divider()
@@ -209,19 +210,19 @@ fun EditPostScreen(
 
             // GESTIÓN DE IMÁGENES
             Text(
-                text = "Imágenes",
+                text = "Imágenes (solo lectura)",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
-            // Imágenes existentes
-            if (existingImages.isNotEmpty()) {
-                Text(
-                    text = "Imágenes actuales:",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Text(
+                text = "Nota: La edición de imágenes no está disponible. Para cambiar las imágenes, crea una nueva publicación.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
+            // Imágenes existentes (solo visualización)
+            if (existingImages.isNotEmpty()) {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -231,121 +232,110 @@ fun EditPostScreen(
                         ) {
                             Image(
                                 painter = rememberAsyncImagePainter(imageUrl),
-                                contentDescription = null,
+                                contentDescription = "Imagen ${index + 1}",
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .clip(RoundedCornerShape(8.dp)),
                                 contentScale = ContentScale.Crop
                             )
-
-                            IconButton(
-                                onClick = {
-                                    existingImages = existingImages.toMutableList().apply {
-                                        removeAt(index)
-                                    }
-                                },
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .size(24.dp)
-                                    .background(Color.Red, RoundedCornerShape(12.dp))
-                            ) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = "Eliminar",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
                         }
                     }
                 }
             }
 
+            Divider()
 
-            // Botón para agregar nuevas imágenes
-            OutlinedButton(
-                onClick = { imagePickerLauncher.launch("image/*") },
-                modifier = Modifier.fillMaxWidth()
+            // Switch de privacidad
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.AccountCircle, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Agregar más imágenes")
-            }
-
-            // Preview de nuevas imágenes
-            if (selectedImageUris.isNotEmpty()) {
-                Text(
-                    text = "Nuevas imágenes a agregar:",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    itemsIndexed(selectedImageUris) { index, uri ->
-                        Box(
-                            modifier = Modifier.size(100.dp)
-                        ) {
-                            Image(
-                                painter = rememberAsyncImagePainter(uri),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(RoundedCornerShape(8.dp)),
-                                contentScale = ContentScale.Crop
-                            )
-
-                            IconButton(
-                                onClick = {
-                                    selectedImageUris = selectedImageUris.toMutableList().apply {
-                                        removeAt(index)
-                                    }
-                                },
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .size(24.dp)
-                                    .background(Color.Red, RoundedCornerShape(12.dp))
-                            ) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = "Eliminar",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-                    }
+                Column {
+                    Text(
+                        text = "Publicación privada",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = if (esPrivado) "Solo tú puedes verla" else "Visible para todos",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
+                Switch(
+                    checked = esPrivado,
+                    onCheckedChange = { esPrivado = it },
+                    enabled = !isLoading
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Mensaje de error
+            errorMessage?.let { error ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Text(
+                        text = error,
+                        modifier = Modifier.padding(12.dp),
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
+
             // Botón de guardar cambios
             Button(
                 onClick = {
-                    if (titulo.isNotBlank() && descripcion.isNotBlank()) {
-                        val updatedPost = post.copy(
+                    if (titulo.isNotBlank() && descripcion.isNotBlank() && fechaVisita.isNotBlank()) {
+                        // Llamar al método de actualización del ViewModel
+                        viewModel.updatePost(
+                            postId = post.id,
                             titulo = titulo,
                             descripcion = descripcion,
                             fechaVisita = fechaVisita,
-                            direccion = direccion,
+                            direccion = direccion.ifBlank { null },
                             esPrivado = esPrivado
-                            // Las imágenes requerirían lógica adicional en el backend
                         )
 
-                        // Aquí llamarías a viewModel.updatePost(updatedPost)
+                        // Mostrar mensaje y navegar de vuelta
                         Toast.makeText(context, "Publicación actualizada", Toast.LENGTH_SHORT).show()
                         onPostUpdated()
                     } else {
-                        Toast.makeText(context, "Completa los campos obligatorios", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "Completa los campos obligatorios",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .height(56.dp),
+                enabled = !isLoading
             ) {
-                Text("Guardar Cambios")
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White
+                    )
+                } else {
+                    Text("Guardar Cambios")
+                }
             }
         }
+    }
+}
+
+// Helper para formatear fecha legible
+private fun formatDateForDisplay(isoDate: String): String {
+    return try {
+        val parts = isoDate.split("T")[0].split("-")
+        "${parts[2]}/${parts[1]}/${parts[0]}"
+    } catch (e: Exception) {
+        isoDate
     }
 }
