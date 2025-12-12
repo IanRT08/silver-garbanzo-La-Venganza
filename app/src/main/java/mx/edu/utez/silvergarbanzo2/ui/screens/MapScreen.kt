@@ -10,8 +10,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -27,10 +30,21 @@ fun MapScreen(
     currentUserId: Int,
     onMarkerClick: (Int) -> Unit
 ) {
-    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    LaunchedEffect(Unit) {
-        postViewModel.loadPublicPosts()
+    //Recargar posts públicos cada vez que la pantalla vuelve al frente
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                postViewModel.loadPublicPosts()
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     Scaffold(
@@ -105,7 +119,7 @@ private fun createMapView(
         marker.title = post.titulo
         marker.snippet = post.descripcion
 
-        // Determinar el color según el tipo de publicación
+        //Determinar el color según el tipo de publicación
         val color = when {
             post.usuarioId == currentUserId && post.esPrivado ->
                 android.graphics.Color.RED // Mis lugares privados
@@ -115,7 +129,7 @@ private fun createMapView(
                 android.graphics.Color.BLUE // Lugares de otros usuarios
         }
 
-        // Crear icono personalizado con el color correcto
+        //Crear icono personalizado con el color correcto
         marker.icon = createColoredMarkerIcon(context, color)
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
 
@@ -130,7 +144,7 @@ private fun createMapView(
     return mapView
 }
 
-// Crear icono de marcador con color personalizado
+//Crear icono de marcador con color personalizado
 private fun createColoredMarkerIcon(context: Context, color: Int): BitmapDrawable {
     val size = 80
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
